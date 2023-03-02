@@ -1,0 +1,57 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('fetching') {
+            steps {
+                echo 'Hello World'
+                sh '''
+                ls -lrth
+                '''
+                 checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: 'gitpassword', url: 'https://github.com/millionow/java-hello-world-with-maven']]])
+            }
+      
+        }
+    stage('building') {
+        steps {
+                sh '''
+                 pwd
+                 echo "bulinding in progrs"
+                 mvn clean install
+                 '''
+            
+            }
+           
+        }
+    stage("create docker image") {
+        steps {
+            sh '''
+             cp Dockerfile /var/lib/jenkins/workspace/one/target/
+             cd /var/lib/jenkins/workspace/one/target/
+             pwd
+             echo "creating docker image"
+             docker build -t bivindambadi/repo2 .
+             echo "bulding success"
+
+
+
+            '''
+
+        }
+    }
+    stage("pushing to hub") {
+        steps {
+        sh '''
+         echo pushing
+         echo "${dockerpwd}"
+         docker login -u bivindambadi --password Ambadi@143
+         echo "login success"
+
+         echo "pushing"
+         docker push bivindambadi/repo2
+        ''' 
+        }
+    }
+
+    }
+}
